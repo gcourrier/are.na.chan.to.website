@@ -1,4 +1,4 @@
-name: Deploy Website
+name: Test Workflow
 
 on:
   push:
@@ -13,12 +13,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Build and Deploy
-        env:
-          ARENA_API_TOKEN: ${{ secrets.ARENA_API_TOKEN }}
-        run: |
-          echo "Building site..."
-          echo "const arenaToken = '${ARENA_API_TOKEN}';" > env.js
-          # Your build and deploy commands here
-          npm install
-          npm run build
+      - name: Print Hello World
+        run: echo "Hello, World!"
+
+      - name: Print Environment Variables
+        run: printenv
