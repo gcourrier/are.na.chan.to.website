@@ -8,11 +8,17 @@ on:
 jobs:
   example:
     runs-on: ubuntu-latest
+    env:
+      ARENA_API_TOKEN: ${{ secrets.ARENA_API_TOKEN }}
+      CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Use Secret in Script
+      - name: Use Secrets in Script
         run: |
-          echo "API Token is ${{ secrets.ARENA_API_TOKEN }}"
+          echo "API Token: $ARENA_API_TOKEN"
+          echo "Channel ID: $CHANNEL_ID"
+          # Here, you can run a script or command that uses these secrets
+          # For example, making an API request or using them in a build process
