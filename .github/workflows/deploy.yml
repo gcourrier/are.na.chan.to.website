@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Example Workflow
 
 on:
   push:
@@ -6,35 +6,13 @@ on:
       - main
 
 jobs:
-  deploy:
+  example:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
-      - name: Setup Git
+
+      - name: Use Secret in Script
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-
-      - name: Create or Update `gh-pages` Branch
-        run: |
-          # Ensure we are on the main branch
-          git checkout main
-          
-          # Create a `gh-pages` branch if it does not exist
-          git branch -r | grep 'origin/gh-pages' || git checkout -b gh-pages
-
-          # Delete all files in the `gh-pages` branch
-          git rm -rf .
-
-          # Copy files from the `main` branch to `gh-pages`
-          cp -r * . || true
-
-          # Add and commit changes
-          git add .
-          git commit -m "Deploy to GitHub Pages" || echo "No changes to commit"
-
-          # Push changes to the `gh-pages` branch
-          git push --force https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} gh-pages
+          echo "API Token is ${{ secrets.ARENA_API_TOKEN }}"
