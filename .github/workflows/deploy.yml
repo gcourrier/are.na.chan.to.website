@@ -18,8 +18,11 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Build and Deploy
+      - name: Install Dependencies
+        run: npm install -g gh-pages
+
+      - name: Deploy to GitHub Pages
         run: |
-          echo "Building site..."
-          npm install -g gh-pages
-          gh-pages -d . # Assumes your `index.html` is in the root directory
+          gh-pages -d .
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
