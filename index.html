@@ -11,6 +11,9 @@
             overflow: hidden;
             height: 100%;
             width: 100%;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
         }
         #content {
             display: flex;
@@ -18,33 +21,44 @@
             justify-content: center;
             height: 100%;
             width: 100%;
-            background: #000;
+        }
+        #startButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #444;
             color: #fff;
-            font-size: 2rem;
-            text-align: center;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #startButton:hover {
+            background-color: #666;
         }
     </style>
 </head>
 <body>
-    <div id="content">Loading...</div>
+    <button id="startButton">Start Loop</button>
+    <div id="content">Click "Start Loop" to begin.</div>
     <script>
         async function fetchData() {
-            const token = 'YOUR_ARENA_API_TOKEN'; // Replace with your actual token
-            const channelId = 'zkpwl8ts3ei'; // Replace with your channel ID
+            const token = 'YOUR_ARENA_API_TOKEN'; // Placeholder for the token
+            const channelId = 'YOUR_CHANNEL_ID'; // Placeholder for the channel ID
 
-            const response = await fetch(`https://api.are.na/v2/channels/${channelId}/contents`, {
+            const response = await fetch(`https://api.are.na/v2/channels/${channelId}/contents?per=20`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
             const data = await response.json();
-            return data;
+            return data.contents.slice(0, 20); // Get the first 20 elements
         }
 
         async function displayElements() {
             const contentDiv = document.getElementById('content');
             const data = await fetchData();
-            const elements = data.contents;
+            const elements = data;
 
             let index = 0;
             function showNextElement() {
@@ -60,7 +74,10 @@
             showNextElement();
         }
 
-        displayElements();
+        document.getElementById('startButton').addEventListener('click', () => {
+            document.getElementById('content').innerHTML = ''; // Clear initial message
+            displayElements();
+        });
     </script>
 </body>
 </html>
