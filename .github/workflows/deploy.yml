@@ -1,4 +1,4 @@
-name: Example Workflow
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -6,19 +6,21 @@ on:
       - main
 
 jobs:
-  example:
+  deploy:
     runs-on: ubuntu-latest
-    env:
-      ARENA_API_TOKEN: ${{ secrets.ARENA_API_TOKEN }}
-      CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Use Secrets in Script
+      - name: Inject Environment Variables
         run: |
-          echo "API Token: $ARENA_API_TOKEN"
-          echo "Channel ID: $CHANNEL_ID"
-          # Here, you can run a script or command that uses these secrets
-          # For example, making an API request or using them in a build process
+          sed -i 's/YOUR_API_TOKEN/${{ secrets.ARENA_API_TOKEN }}/g' index.html
+          sed -i 's/YOUR_CHANNEL_ID/${{ secrets.CHANNEL_ID }}/g' index.html
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@4.4.0
+        with:
+          branch: gh-pages
+          folder: .
+          token: ${{ secrets.GITHUB_TOKEN }}
