@@ -23,6 +23,6 @@ jobs:
 
       - name: Deploy to GitHub Pages
         run: |
-          gh-pages -d .
+          npx gh-pages -d . # Using `npx` to run gh-pages locally without installing globally
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Ensure GH_TOKEN is available
