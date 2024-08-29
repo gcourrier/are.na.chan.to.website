@@ -13,26 +13,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Git
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'  # or the version of Node.js you're using
+
+      - name: Install dependencies
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
+          npm install
+
+      - name: Build project
+        run: |
+          npm run build  # Adjust this if you're using a build step
 
       - name: Deploy to GitHub Pages
         run: |
-          # Create a temporary directory for deployment
-          mkdir -p public
-          cp index.html public/
-          cd public
-          
-          # Initialize a new Git repository
-          git init
+          echo "Deploying to GitHub Pages"
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git checkout -b gh-pages
           git add .
           git commit -m "Deploy to GitHub Pages"
-
-          # Configure remote and push to gh-pages branch
-          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-          git checkout -b gh-pages
-          git push --force origin gh-pages
+          git push --force https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} gh-pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
