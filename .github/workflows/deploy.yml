@@ -18,17 +18,21 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
-      - name: Build and Deploy
+      - name: Deploy to GitHub Pages
         run: |
           # Create a temporary directory for deployment
           mkdir -p public
           cp index.html public/
           cd public
+          
+          # Initialize a new Git repository
           git init
           git add .
           git commit -m "Deploy to GitHub Pages"
-          git branch -M gh-pages
+
+          # Configure remote and push to gh-pages branch
           git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          git checkout -b gh-pages
           git push --force origin gh-pages
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
