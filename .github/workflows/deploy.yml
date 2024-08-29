@@ -18,13 +18,14 @@ jobs:
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
 
-      - name: Create `gh-pages` branch
+      - name: Create or Update `gh-pages` Branch
         run: |
-          git checkout -b gh-pages || git checkout gh-pages
+          git fetch origin gh-pages || true
+          git checkout gh-pages || git checkout -b gh-pages
           git rm -rf .
-          cp -r * . # Copy all files from the main branch
+          cp -r .gitignore index.html *.css *.js . # Adjust this line based on the actual files in your repo
           git add .
-          git commit -m "Deploy to GitHub Pages"
+          git commit -m "Deploy to GitHub Pages" || echo "No changes to commit"
           git push --force https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} gh-pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
