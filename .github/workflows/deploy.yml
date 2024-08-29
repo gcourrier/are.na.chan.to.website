@@ -1,4 +1,4 @@
-name: Deploy Website
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -6,18 +6,20 @@ on:
       - main
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
       - name: Build and Deploy
-        env:
-          ARENA_API_TOKEN: ${{ secrets.ARENA_API_TOKEN }}
         run: |
           echo "Building site..."
-          echo "const arenaToken = '${ARENA_API_TOKEN}';" > env.js
-          npm install
-          npm run build
+          npm install -g gh-pages
+          gh-pages -d . # Assumes your `index.html` is in the root directory
