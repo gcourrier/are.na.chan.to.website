@@ -20,28 +20,29 @@ jobs:
 
       - name: Create or Update `gh-pages` Branch
         run: |
-          # Create a temporary directory
+          # Create a temporary directory to work with
           mkdir gh-pages
-          
-          # Move to the temporary directory
           cd gh-pages
-          
-          # Initialize a new Git repository
+
+          # Initialize a Git repository
           git init
           git remote add origin https://github.com/${{ github.repository }}.git
 
-          # Fetch the gh-pages branch if it exists
+          # Fetch the existing gh-pages branch or create it if it does not exist
           git fetch origin gh-pages || echo "No gh-pages branch found, creating new one."
-          
-          # Check out the gh-pages branch or create it
           git checkout gh-pages || git checkout -b gh-pages
 
-          # Copy files from the main branch
-          cp -r ../* . # Copy files from the root of the main branch
+          # Remove all files from the gh-pages branch
+          git rm -rf .
 
-          # Commit and push changes
+          # Copy files from the main branch to gh-pages
+          cp -r ../* .
+
+          # Add and commit the files
           git add .
           git commit -m "Deploy to GitHub Pages" || echo "No changes to commit"
+
+          # Push changes to the gh-pages branch
           git push --force origin gh-pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
