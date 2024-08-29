@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Are.na Channel Loop</title>
+</head>
+<body>
+    <div id="arena-channel">
+        <!-- Channel content will be loaded here -->
+    </div>
+
+    <script>
+        async function fetchArenaData() {
+            const response = await fetch('https://api.are.na/v2/channels/YOUR_CHANNEL_SLUG?per=10');
+            const data = await response.json();
+
+            let channelContent = '';
+            data.contents.forEach(item => {
+                channelContent += `<div>${item.title}</div>`;
+            });
+
+            document.getElementById('arena-channel').innerHTML = channelContent;
+        }
+
+        fetchArenaData();
+    </script>
+</body>
+</html>
