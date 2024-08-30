@@ -1,0 +1,11 @@
+{
+  "name": "are-na-channel-website",
+  "version": "1.0.0",
+  "description": "A simple website to display an Are.na channel's content.",
+  "scripts": {
+    "deploy": "gh-pages -d ."
+  },
+  "dependencies": {
+    "gh-pages": "^5.0.0"
+  }
+}

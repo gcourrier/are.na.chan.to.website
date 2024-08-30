@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Are.na Channel</title>
+    <style>
+        /* Basic full-screen styling */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #111;
+            color: white;
+        }
+        .element {
+            display: none;
+            font-size: 2em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="content"></div>
+
+    <script>
+        const token = 'YOUR_API_TOKEN';  // This will be replaced by GitHub Actions
+        const channelId = 'YOUR_CHANNEL_ID';  // This will be replaced by GitHub Actions
+
+        fetch(`https://api.are.na/v2/channels/${channelId}/contents?per=20`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const contentDiv = document.getElementById('content');
+            data.contents.forEach((content, index) => {
+                const element = document.createElement('div');
+                element.className = 'element';
+                element.textContent = content.title || 'No title';
+                contentDiv.appendChild(element);
+
+                setTimeout(() => {
+                    const current = document.querySelector('.element.active');
+                    if (current) current.classList.remove('active');
+                    element.classList.add('active');
+                    element.style.display = 'block';
+                }, index * 5000); // 5 seconds per element
+            });
+        });
+    </script>
+</body>
+</html>
