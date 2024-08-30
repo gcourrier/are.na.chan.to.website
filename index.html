@@ -72,7 +72,7 @@
             const sortedContents = contents.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
             // Keep only the 20 most recent images
-            const images = sortedContents.slice(0, 20).filter(content => content.image);
+            const images = sortedContents.slice(0, 40).filter(content => content.image);
 
             if (images.length === 0) {
                 container.innerHTML = '<p>No images available.</p>';
