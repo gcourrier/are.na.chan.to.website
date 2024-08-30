@@ -3,80 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Are.na Channel Loop</title>
+    <title>Are.na Channel</title>
     <style>
+        /* Basic full-screen styling */
         body, html {
             margin: 0;
             padding: 0;
-            overflow: hidden;
-            height: 100%;
             width: 100%;
-            background: #000;
-            color: #fff;
-            font-family: Arial, sans-serif;
-        }
-        #content {
+            height: 100%;
             display: flex;
-            align-items: center;
             justify-content: center;
-            height: 100%;
-            width: 100%;
+            align-items: center;
+            background-color: #111;
+            color: white;
         }
-        #startButton {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 10px 20px;
-            background-color: #444;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        #startButton:hover {
-            background-color: #666;
+        .element {
+            display: none;
+            font-size: 2em;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <button id="startButton">Start Loop</button>
-    <div id="content">Click "Start Loop" to begin.</div>
+    <div id="content"></div>
+
     <script>
-        async function fetchData() {
-            const token = 'YOUR_ARENA_API_TOKEN'; // Placeholder for the token
-            const channelId = 'YOUR_CHANNEL_ID'; // Placeholder for the channel ID
+        const token = 'YOUR_API_TOKEN';  // This will be replaced by GitHub Actions
+        const channelId = 'YOUR_CHANNEL_ID';  // This will be replaced by GitHub Actions
 
-            const response = await fetch(`https://api.are.na/v2/channels/${channelId}/contents?per=20`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            const data = await response.json();
-            return data.contents.slice(0, 20); // Get the first 20 elements
-        }
-
-        async function displayElements() {
-            const contentDiv = document.getElementById('content');
-            const data = await fetchData();
-            const elements = data;
-
-            let index = 0;
-            function showNextElement() {
-                if (elements.length === 0) return;
-
-                const element = elements[index];
-                contentDiv.innerHTML = `<img src="${element.image.urls.full}" alt="${element.title}" style="max-width: 100%; max-height: 100%;">`; // Adjust according to content type
-
-                index = (index + 1) % elements.length; // Loop back to the start
-                setTimeout(showNextElement, 5000); // Change element every 5 seconds
+        fetch(`https://api.are.na/v2/channels/${channelId}/contents?per=20`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
             }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const contentDiv = document.getElementById('content');
+            data.contents.forEach((content, index) => {
+                const element = document.createElement('div');
+                element.className = 'element';
+                element.textContent = content.title || 'No title';
+                contentDiv.appendChild(element);
 
-            showNextElement();
-        }
-
-        document.getElementById('startButton').addEventListener('click', () => {
-            document.getElementById('content').innerHTML = ''; // Clear initial message
-            displayElements();
+                setTimeout(() => {
+                    const current = document.querySelector('.element.active');
+                    if (current) current.classList.remove('active');
+                    element.classList.add('active');
+                    element.style.display = 'block';
+                }, index * 5000); // 5 seconds per element
+            });
         });
     </script>
 </body>
