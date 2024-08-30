@@ -13,14 +13,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Inject Environment Variables
+      - name: Setup Git
         run: |
-          sed -i 's/YOUR_API_TOKEN/${{ secrets.ARENA_API_TOKEN }}/g' index.html
-          sed -i 's/YOUR_CHANNEL_ID/${{ secrets.CHANNEL_ID }}/g' index.html
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: gh-pages
           folder: .
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}  # Use your PAT here
