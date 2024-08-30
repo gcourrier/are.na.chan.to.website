@@ -21,6 +21,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
         }
         .item {
             position: absolute;
@@ -48,7 +49,7 @@
         async function fetchChannelContents() {
             const apiToken = 'YOUR_API_TOKEN'; // Replace with your actual API token
             const channelId = 'gedeon_inspi-o8tvsjj9tvs'; // Your actual channel ID
-            const url = `https://api.are.na/v2/channels/${channelId}/contents?per=20`;
+            const url = `https://api.are.na/v2/channels/${channelId}/contents?per=40`;
             
             try {
                 const response = await fetch(url, {
@@ -79,22 +80,22 @@
                 return;
             }
 
-            contents.forEach((content, index) => {
-                if (content.image) {
-                    const img = document.createElement('img');
-                    img.src = content.image.original.url; // Ensure the URL is correct
-                    img.className = 'item';
-                    container.appendChild(img);
-                }
-            });
+            // Keep only the first 40 images
+            const images = contents.slice(0, 40).filter(content => content.image);
 
-            const items = document.querySelectorAll('.item');
-            
-            if (items.length === 0) {
+            if (images.length === 0) {
                 container.innerHTML = '<p>No images available.</p>';
                 return;
             }
 
+            images.forEach((content, index) => {
+                const img = document.createElement('img');
+                img.src = content.image.original.url; // Ensure the URL is correct
+                img.className = 'item';
+                container.appendChild(img);
+            });
+
+            const items = document.querySelectorAll('.item');
             let currentIndex = 0;
             
             function showNextItem() {
