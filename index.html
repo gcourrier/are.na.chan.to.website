@@ -39,9 +39,10 @@
 <body>
     <div id="container"></div>
     <script>
+        const apiToken = 'YOUR_API_TOKEN'; // Replace with your actual API token
+        const channelId = 'gedeon_inspi-o8tvsjj9tvs'; // Your actual channel ID
+
         async function fetchChannelContents() {
-            const apiToken = 'YOUR_API_TOKEN'; // Replace with your actual API token
-            const channelId = 'gedeon_inspi-o8tvsjj9tvs'; // Your actual channel ID
             const url = `https://api.are.na/v2/channels/${channelId}/contents?per=40`;
 
             try {
@@ -64,14 +65,8 @@
             }
         }
 
-        async function displayChannelContents() {
-            const contents = await fetchChannelContents();
+        function updateImages(contents) {
             const container = document.getElementById('container');
-
-            if (contents.length === 0) {
-                container.innerHTML = '<p>No content available.</p>';
-                return;
-            }
 
             // Sort items by the updated_at date in descending order
             const sortedContents = contents.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
@@ -83,6 +78,8 @@
                 container.innerHTML = '<p>No images available.</p>';
                 return;
             }
+
+            container.innerHTML = ''; // Clear existing images
 
             images.forEach((content, index) => {
                 const div = document.createElement('div');
@@ -103,6 +100,27 @@
 
             showNextItem();
             setInterval(showNextItem, 5000); // Change image every 5 seconds
+        }
+
+        async function displayChannelContents() {
+            let currentImages = []; // Array to keep track of currently displayed images
+
+            async function refreshImages() {
+                const contents = await fetchChannelContents();
+                const newImages = contents.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 20).filter(content => content.image);
+
+                // Check if there are any new images
+                if (JSON.stringify(currentImages) !== JSON.stringify(newImages)) {
+                    currentImages = newImages; // Update current images
+                    updateImages(newImages); // Update display with new images
+                }
+            }
+
+            // Initial load
+            await refreshImages();
+            
+            // Refresh images every 60 seconds
+            setInterval(refreshImages, 60000);
         }
 
         displayChannelContents();
