@@ -93,8 +93,8 @@
                     img.src = content.image.original.url;
                     div.appendChild(img);
                 }
-                // If it's a video (with "source" URL), create a video element
-                else if (content.source && content.source.url.includes('.mp4')) {
+                // Check if it’s a video
+                else if (content.source && content.source.url && content.source.url.endsWith('.mp4')) {
                     const video = document.createElement('video');
                     video.src = content.source.url;
                     video.controls = false;
