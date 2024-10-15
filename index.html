@@ -34,10 +34,17 @@
             background-repeat: no-repeat;
             background-position: center;
         }
+        video, iframe {
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
     <div id="container"></div>
+
+    <script src="https://player.vimeo.com/api/player.js"></script> <!-- Vimeo API -->
+
     <script>
         const apiToken = 'YOUR_API_TOKEN'; // Replace with your actual API token
         const channelId = 'gedeon_inspi-o8tvsjj9tvs'; // Your actual channel ID
@@ -65,62 +72,100 @@
             }
         }
 
-        function updateImages(contents) {
+        function updateContent(contents) {
             const container = document.getElementById('container');
 
             // Sort items by the updated_at date in descending order
             const sortedContents = contents.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
-            // Keep only the 20 most recent images
-            const images = sortedContents.slice(0, 40).filter(content => content.image);
+            // Filter relevant contents (images, videos, Vimeo)
+            const mediaContents = sortedContents.slice(0, 40).filter(content => content.image || content.source || content.embed);
 
-            if (images.length === 0) {
-                container.innerHTML = '<p>No images available.</p>';
+            if (mediaContents.length === 0) {
+                container.innerHTML = '<p>No media available.</p>';
                 return;
             }
 
-            container.innerHTML = ''; // Clear existing images
+            container.innerHTML = ''; // Clear existing content
 
-            images.forEach((content, index) => {
+            mediaContents.forEach((content) => {
                 const div = document.createElement('div');
                 div.className = 'item';
-                div.style.backgroundImage = `url(${content.image.original.url})`; // Set the image as background
+
+                if (content.image) {
+                    // Handle images
+                    div.style.backgroundImage = `url(${content.image.original.url})`;
+                } else if (content.source && content.source.url.includes('.mp4')) {
+                    // Handle MP4 videos
+                    const video = document.createElement('video');
+                    video.src = content.source.url;
+                    video.controls = true;
+                    div.appendChild(video);
+                } else if (content.embed && content.embed.url.includes('vimeo.com')) {
+                    // Handle Vimeo videos
+                    const iframe = document.createElement('iframe');
+                    iframe.src = `https://player.vimeo.com/video/${content.embed.id}`;
+                    iframe.frameborder = '0';
+                    iframe.allow = 'autoplay; fullscreen';
+                    div.appendChild(iframe);
+                }
+
                 container.appendChild(div);
             });
 
             const items = document.querySelectorAll('.item');
             let currentIndex = 0;
-            
+
             function showNextItem() {
-                items.forEach((item, index) => {
-                    item.style.display = (index === currentIndex) ? 'block' : 'none';
-                });
-                currentIndex = (currentIndex + 1) % items.length;
+                const currentItem = items[currentIndex];
+                currentItem.style.display = 'block';
+
+                const video = currentItem.querySelector('video');
+                const iframe = currentItem.querySelector('iframe');
+
+                if (video) {
+                    // For MP4 videos, wait for the video to finish before moving to the next item
+                    video.play();
+                    video.addEventListener('ended', moveToNextItem);
+                } else if (iframe) {
+                    // For Vimeo videos, use Vimeo API to detect when the video ends
+                    const player = new Vimeo.Player(iframe);
+                    player.on('ended', moveToNextItem);
+                } else {
+                    // For images, show for 5 seconds then move to the next item
+                    setTimeout(moveToNextItem, 5000);
+                }
             }
 
-            showNextItem();
-            setInterval(showNextItem, 5000); // Change image every 5 seconds
+            function moveToNextItem() {
+                items[currentIndex].style.display = 'none';
+                currentIndex = (currentIndex + 1) % items.length;
+                showNextItem();
+            }
+
+            showNextItem(); // Start the cycle
         }
 
         async function displayChannelContents() {
-            let currentImages = []; // Array to keep track of currently displayed images
+            let currentMedia = []; // Array to keep track of currently displayed media
 
-            async function refreshImages() {
+            async function refreshMedia() {
                 const contents = await fetchChannelContents();
-                const newImages = contents.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 20).filter(content => content.image);
+                const newMedia = contents.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+                    .slice(0, 40).filter(content => content.image || content.source || content.embed);
 
-                // Check if there are any new images
-                if (JSON.stringify(currentImages) !== JSON.stringify(newImages)) {
-                    currentImages = newImages; // Update current images
-                    updateImages(newImages); // Update display with new images
+                // Check if there are any new media items
+                if (JSON.stringify(currentMedia) !== JSON.stringify(newMedia)) {
+                    currentMedia = newMedia; // Update current media
+                    updateContent(newMedia); // Update display with new media
                 }
             }
 
             // Initial load
-            await refreshImages();
+            await refreshMedia();
             
-            // Refresh images every 60 seconds
-            setInterval(refreshImages, 60000);
+            // Refresh media every 30 minutes (1800000 ms)
+            setInterval(refreshMedia, 1800000);
         }
 
         displayChannelContents();
