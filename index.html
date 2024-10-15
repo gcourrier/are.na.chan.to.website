@@ -30,11 +30,9 @@
             width: 100%;
             height: 100%;
             display: none;
-        }
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+            background-size: contain; /* Preserve aspect ratio */
+            background-repeat: no-repeat;
+            background-position: center;
         }
     </style>
 </head>
@@ -45,12 +43,12 @@
         const channelId = 'gedeon_inspi-o8tvsjj9tvs'; // Your actual channel ID
 
         async function fetchChannelContents() {
-            const url = `https://api.are.na/v2/channels/${channelId}/contents?per=40`;
+            const url = https://api.are.na/v2/channels/${channelId}/contents?per=40;
 
             try {
                 const response = await fetch(url, {
                     headers: {
-                        'Authorization': `Bearer ${apiToken}`
+                        'Authorization': Bearer ${apiToken}
                     }
                 });
                 if (!response.ok) {
@@ -67,98 +65,62 @@
             }
         }
 
-        function updateContents(contents) {
+        function updateImages(contents) {
             const container = document.getElementById('container');
 
             // Sort items by the updated_at date in descending order
             const sortedContents = contents.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
-            const items = sortedContents.filter(content => content.image || content.embed || content.source);
+            // Keep only the 20 most recent images
+            const images = sortedContents.slice(0, 40).filter(content => content.image);
 
-            if (items.length === 0) {
-                container.innerHTML = '<p>No media available.</p>';
+            if (images.length === 0) {
+                container.innerHTML = '<p>No images available.</p>';
                 return;
             }
 
-            container.innerHTML = ''; // Clear existing content
+            container.innerHTML = ''; // Clear existing images
 
-            items.forEach((content, index) => {
+            images.forEach((content, index) => {
                 const div = document.createElement('div');
                 div.className = 'item';
-
-                if (content.image) {
-                    div.style.backgroundImage = `url(${content.image.original.url})`; // Set the image as background
-                    div.style.backgroundSize = 'contain'; // Preserve aspect ratio
-                    div.style.backgroundRepeat = 'no-repeat';
-                    div.style.backgroundPosition = 'center';
-                } else if (content.source && content.source.url.endsWith('.mp4')) {
-                    const video = document.createElement('video');
-                    video.src = content.source.url;
-                    video.controls = false;
-                    video.autoplay = true;
-                    video.loop = false;
-                    div.appendChild(video);
-                } else if (content.embed && content.embed.html.includes('vimeo')) {
-                    const videoId = content.embed.html.match(/vimeo\.com\/video\/(\d+)/)[1];
-                    const iframe = document.createElement('iframe');
-                    iframe.src = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=0`;
-                    iframe.width = '100%';
-                    iframe.height = '100%';
-                    iframe.frameBorder = '0';
-                    iframe.allow = 'autoplay; fullscreen';
-                    iframe.allowFullscreen = true;
-                    div.appendChild(iframe);
-                }
-
+                div.style.backgroundImage = url(${content.image.original.url}); // Set the image as background
                 container.appendChild(div);
             });
 
-            const itemsDiv = document.querySelectorAll('.item');
+            const items = document.querySelectorAll('.item');
             let currentIndex = 0;
-
-            async function showNextItem() {
-                itemsDiv.forEach((item, index) => {
+            
+            function showNextItem() {
+                items.forEach((item, index) => {
                     item.style.display = (index === currentIndex) ? 'block' : 'none';
                 });
-
-                const currentItem = itemsDiv[currentIndex];
-                const video = currentItem.querySelector('video');
-
-                if (video) {
-                    // Wait for the video to finish before moving to the next item
-                    await new Promise(resolve => {
-                        video.onended = resolve;
-                    });
-                } else {
-                    // Default timeout for non-video items (like images)
-                    await new Promise(resolve => setTimeout(resolve, 5000));
-                }
-
-                currentIndex = (currentIndex + 1) % itemsDiv.length;
-                showNextItem();
+                currentIndex = (currentIndex + 1) % items.length;
             }
 
             showNextItem();
+            setInterval(showNextItem, 5000); // Change image every 5 seconds
         }
 
         async function displayChannelContents() {
-            let currentItems = [];
+            let currentImages = []; // Array to keep track of currently displayed images
 
-            async function refreshItems() {
+            async function refreshImages() {
                 const contents = await fetchChannelContents();
-                const newItems = contents.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 20).filter(content => content.image || content.embed || content.source);
+                const newImages = contents.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 20).filter(content => content.image);
 
-                if (JSON.stringify(currentItems) !== JSON.stringify(newItems)) {
-                    currentItems = newItems;
-                    updateContents(newItems);
+                // Check if there are any new images
+                if (JSON.stringify(currentImages) !== JSON.stringify(newImages)) {
+                    currentImages = newImages; // Update current images
+                    updateImages(newImages); // Update display with new images
                 }
             }
 
             // Initial load
-            await refreshItems();
-
-            // Refresh every 30 minutes (1800000 ms)
-            setInterval(refreshItems, 1800000);
+            await refreshImages();
+            
+            // Refresh images every 60 seconds
+            setInterval(refreshImages, 60000);
         }
 
         displayChannelContents();
