@@ -30,21 +30,16 @@
             width: 100%;
             height: 100%;
             display: none;
-            background-size: contain; /* Preserve aspect ratio */
-            background-repeat: no-repeat;
-            background-position: center;
         }
-        video, iframe {
+        video {
             width: 100%;
             height: 100%;
+            object-fit: contain;
         }
     </style>
 </head>
 <body>
     <div id="container"></div>
-
-    <script src="https://player.vimeo.com/api/player.js"></script> <!-- Vimeo API -->
-
     <script>
         const apiToken = 'YOUR_API_TOKEN'; // Replace with your actual API token
         const channelId = 'gedeon_inspi-o8tvsjj9tvs'; // Your actual channel ID
@@ -72,100 +67,98 @@
             }
         }
 
-        function updateContent(contents) {
+        function updateContents(contents) {
             const container = document.getElementById('container');
 
             // Sort items by the updated_at date in descending order
             const sortedContents = contents.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
-            // Filter relevant contents (images, videos, Vimeo)
-            const mediaContents = sortedContents.slice(0, 40).filter(content => content.image || content.source || content.embed);
+            const items = sortedContents.filter(content => content.image || content.embed || content.source);
 
-            if (mediaContents.length === 0) {
+            if (items.length === 0) {
                 container.innerHTML = '<p>No media available.</p>';
                 return;
             }
 
             container.innerHTML = ''; // Clear existing content
 
-            mediaContents.forEach((content) => {
+            items.forEach((content, index) => {
                 const div = document.createElement('div');
                 div.className = 'item';
 
                 if (content.image) {
-                    // Handle images
-                    div.style.backgroundImage = `url(${content.image.original.url})`;
-                } else if (content.source && content.source.url.includes('.mp4')) {
-                    // Handle MP4 videos
+                    div.style.backgroundImage = `url(${content.image.original.url})`; // Set the image as background
+                    div.style.backgroundSize = 'contain'; // Preserve aspect ratio
+                    div.style.backgroundRepeat = 'no-repeat';
+                    div.style.backgroundPosition = 'center';
+                } else if (content.source && content.source.url.endsWith('.mp4')) {
                     const video = document.createElement('video');
                     video.src = content.source.url;
-                    video.controls = true;
+                    video.controls = false;
+                    video.autoplay = true;
+                    video.loop = false;
                     div.appendChild(video);
-                } else if (content.embed && content.embed.url.includes('vimeo.com')) {
-                    // Handle Vimeo videos
+                } else if (content.embed && content.embed.html.includes('vimeo')) {
+                    const videoId = content.embed.html.match(/vimeo\.com\/video\/(\d+)/)[1];
                     const iframe = document.createElement('iframe');
-                    iframe.src = `https://player.vimeo.com/video/${content.embed.id}`;
-                    iframe.frameborder = '0';
+                    iframe.src = `https://player.vimeo.com/video/${videoId}?autoplay=1&muted=0`;
+                    iframe.width = '100%';
+                    iframe.height = '100%';
+                    iframe.frameBorder = '0';
                     iframe.allow = 'autoplay; fullscreen';
+                    iframe.allowFullscreen = true;
                     div.appendChild(iframe);
                 }
 
                 container.appendChild(div);
             });
 
-            const items = document.querySelectorAll('.item');
+            const itemsDiv = document.querySelectorAll('.item');
             let currentIndex = 0;
 
-            function showNextItem() {
-                const currentItem = items[currentIndex];
-                currentItem.style.display = 'block';
+            async function showNextItem() {
+                itemsDiv.forEach((item, index) => {
+                    item.style.display = (index === currentIndex) ? 'block' : 'none';
+                });
 
+                const currentItem = itemsDiv[currentIndex];
                 const video = currentItem.querySelector('video');
-                const iframe = currentItem.querySelector('iframe');
 
                 if (video) {
-                    // For MP4 videos, wait for the video to finish before moving to the next item
-                    video.play();
-                    video.addEventListener('ended', moveToNextItem);
-                } else if (iframe) {
-                    // For Vimeo videos, use Vimeo API to detect when the video ends
-                    const player = new Vimeo.Player(iframe);
-                    player.on('ended', moveToNextItem);
+                    // Wait for the video to finish before moving to the next item
+                    await new Promise(resolve => {
+                        video.onended = resolve;
+                    });
                 } else {
-                    // For images, show for 5 seconds then move to the next item
-                    setTimeout(moveToNextItem, 5000);
+                    // Default timeout for non-video items (like images)
+                    await new Promise(resolve => setTimeout(resolve, 5000));
                 }
-            }
 
-            function moveToNextItem() {
-                items[currentIndex].style.display = 'none';
-                currentIndex = (currentIndex + 1) % items.length;
+                currentIndex = (currentIndex + 1) % itemsDiv.length;
                 showNextItem();
             }
 
-            showNextItem(); // Start the cycle
+            showNextItem();
         }
 
         async function displayChannelContents() {
-            let currentMedia = []; // Array to keep track of currently displayed media
+            let currentItems = [];
 
-            async function refreshMedia() {
+            async function refreshItems() {
                 const contents = await fetchChannelContents();
-                const newMedia = contents.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
-                    .slice(0, 40).filter(content => content.image || content.source || content.embed);
+                const newItems = contents.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at)).slice(0, 20).filter(content => content.image || content.embed || content.source);
 
-                // Check if there are any new media items
-                if (JSON.stringify(currentMedia) !== JSON.stringify(newMedia)) {
-                    currentMedia = newMedia; // Update current media
-                    updateContent(newMedia); // Update display with new media
+                if (JSON.stringify(currentItems) !== JSON.stringify(newItems)) {
+                    currentItems = newItems;
+                    updateContents(newItems);
                 }
             }
 
             // Initial load
-            await refreshMedia();
-            
-            // Refresh media every 30 minutes (1800000 ms)
-            setInterval(refreshMedia, 1800000);
+            await refreshItems();
+
+            // Refresh every 30 minutes (1800000 ms)
+            setInterval(refreshItems, 1800000);
         }
 
         displayChannelContents();
