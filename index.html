@@ -30,11 +30,9 @@
             width: 100%;
             height: 100%;
             display: none;
-        }
-        video, img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
+            background-size: contain; /* Preserve aspect ratio */
+            background-repeat: no-repeat;
+            background-position: center;
         }
     </style>
 </head>
@@ -67,97 +65,82 @@
             }
         }
 
-        function updateContents(contents) {
+        function updateImages(contents) {
             const container = document.getElementById('container');
+            const sortedContents = contents.reverse().slice(0, 20); // Get the last 20 items
 
-            // Keep the contents in the same order as they are in the channel but reversed
-            const items = contents.filter(content => content.image || content.embed || content.source);
+            container.innerHTML = ''; // Clear existing items
 
-            if (items.length === 0) {
-                container.innerHTML = '<p>No media available.</p>';
-                return;
-            }
-
-            container.innerHTML = ''; // Clear existing content
-
-            // Reverse the items to start from the last one
-            items.reverse();
-
-            items.forEach((content, index) => {
+            sortedContents.forEach((content) => {
                 const div = document.createElement('div');
                 div.className = 'item';
 
-                // Check if it's an image or a GIF
                 if (content.image) {
-                    const img = document.createElement('img');
-                    img.src = content.image.original.url;
-                    div.appendChild(img);
-                }
-                // Check if it’s a video
-                else if (content.source && content.source.url && content.source.url.endsWith('.mp4')) {
-                    const video = document.createElement('video');
-                    video.src = content.source.url;
-                    video.controls = false;
-                    video.autoplay = true;
-                    video.loop = false;
-                    video.muted = true; // Mute video for autoplay to work in most browsers
-                    div.appendChild(video);
+                    // Handle images and gifs
+                    div.style.backgroundImage = `url(${content.image.original.url})`;
+                } else if (content.source && content.source.url) {
+                    const url = content.source.url;
+                    if (url.endsWith('.mp4')) {
+                        // Create video element for direct video URL
+                        const video = document.createElement('video');
+                        video.src = url;
+                        video.controls = false;
+                        video.autoplay = true;
+                        video.loop = false;
+                        video.muted = true; // Ensure muted for autoplay
+                        div.appendChild(video);
+                    } else if (url.includes('<iframe')) {
+                        // Handle embed as iframe
+                        div.innerHTML = url; // Insert the iframe HTML directly
+                    }
                 }
 
                 container.appendChild(div);
             });
 
-            const itemsDiv = document.querySelectorAll('.item');
+            const items = document.querySelectorAll('.item');
             let currentIndex = 0;
 
-            async function showNextItem() {
-                itemsDiv.forEach((item, index) => {
+            function showNextItem() {
+                items.forEach((item, index) => {
                     item.style.display = (index === currentIndex) ? 'block' : 'none';
                 });
-
-                const currentItem = itemsDiv[currentIndex];
-                const video = currentItem.querySelector('video');
-                const image = currentItem.querySelector('img');
-
-                if (video) {
-                    // Wait for the video to finish before moving to the next item
-                    await new Promise(resolve => {
-                        video.onended = resolve; // Resolve when the video ends
-                        video.play(); // Start playing the video
-                    });
-                } else if (image && image.src.endsWith('.gif')) {
-                    // GIFs loop for 5 seconds
-                    await new Promise(resolve => setTimeout(resolve, 5000));
-                } else {
-                    // Default timeout for non-video, non-GIF images (5 seconds)
-                    await new Promise(resolve => setTimeout(resolve, 5000));
-                }
-
-                currentIndex = (currentIndex + 1) % itemsDiv.length;
-                showNextItem();
+                currentIndex = (currentIndex + 1) % items.length;
             }
 
             showNextItem();
+            // Determine the timing for videos and images/gifs
+            let nextChange = 5000; // Default for images
+            items.forEach(item => {
+                const video = item.querySelector('video');
+                if (video) {
+                    video.addEventListener('ended', showNextItem); // Move to next on video end
+                    nextChange = Math.max(nextChange, video.duration * 1000); // Set timing based on video duration
+                }
+            });
+
+            setInterval(showNextItem, nextChange);
         }
 
         async function displayChannelContents() {
-            let currentItems = [];
+            let currentImages = []; // Array to keep track of currently displayed images
 
-            async function refreshItems() {
+            async function refreshImages() {
                 const contents = await fetchChannelContents();
-                const newItems = contents.filter(content => content.image || content.embed || content.source).slice(-20); // Get the last 20 items
+                const newImages = contents.reverse().slice(0, 20); // Get the last 20 items
 
-                if (JSON.stringify(currentItems) !== JSON.stringify(newItems)) {
-                    currentItems = newItems;
-                    updateContents(newItems);
+                // Check if there are any new items
+                if (JSON.stringify(currentImages) !== JSON.stringify(newImages)) {
+                    currentImages = newImages; // Update current images
+                    updateImages(newImages); // Update display with new images
                 }
             }
 
             // Initial load
-            await refreshItems();
-
-            // Refresh every 30 minutes (1800000 ms)
-            setInterval(refreshItems, 1800000);
+            await refreshImages();
+            
+            // Refresh images every 30 minutes (1800000 milliseconds)
+            setInterval(refreshImages, 1800000);
         }
 
         displayChannelContents();
