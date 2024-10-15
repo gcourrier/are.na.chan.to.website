@@ -100,6 +100,7 @@
                     video.controls = false;
                     video.autoplay = true;
                     video.loop = false;
+                    video.muted = true; // Mute video for autoplay to work in most browsers
                     div.appendChild(video);
                 }
 
@@ -121,7 +122,8 @@
                 if (video) {
                     // Wait for the video to finish before moving to the next item
                     await new Promise(resolve => {
-                        video.onended = resolve;
+                        video.onended = resolve; // Resolve when the video ends
+                        video.play(); // Start playing the video
                     });
                 } else if (image && image.src.endsWith('.gif')) {
                     // GIFs loop for 5 seconds
